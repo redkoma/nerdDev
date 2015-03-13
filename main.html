@@ -1,0 +1,805 @@
+<!doctype html>
+<html ng-app="base">
+<head>
+    <meta charset="UTF-8">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="viewport" content="width=device-width">
+    <link rel="stylesheet" href="css/bootstrap.min.css" type="text/css">
+
+    <script type="text/javascript" charset="utf-8" src="cordova.js"></script>
+    <script type="text/javascript" charset="utf-8">
+        var UUID="TEST";
+//        var prefixURL="http://192.168.100.154:8554/";
+        var prefixURL="http://192.168.100.249:8554/";
+
+
+    // device APIs are available
+    //
+    function onDeviceReady() {
+        UUID=device.uuid;
+        
+    }
+
+    </script>    
+    
+    <script type="text/javascript"  src="js/angular.min.js"></script>
+    <script type="text/javascript"  src="js/jquery.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?v=3&sensor=true"></script>
+    
+    <script>
+
+        (function(){
+            var app = angular.module('base',[]);
+            app.controller('mapControl',['$http','$scope','$interval',function($http,$scope,$interval){
+                $scope.from={title:""};
+                $scope.to={title:""};
+                $scope.jobconfirmed=false;
+                $scope.pages=
+                    {
+                        "page1" : true,
+                        "pageTo" : false,
+                        "pageFrom" : false,
+                        "pageCallTaxi" : false,
+                        "pageRegister" : false,
+                        "pageFinish" : false,
+                        "pageTrack" : false
+                    };
+                $scope.gotoPage=function(page){
+                        console.log("call");
+                    $.each($scope.pages,function(k,v){
+                        if(k==page){
+                            $scope.pages[k]=true;
+                        }else{
+                            $scope.pages[k]=false;
+                        }
+                    });
+                    
+                    if(page=="pageCallTaxi"){
+                        var d = new Date();
+                        var n = d.getTime();
+                        $scope.jobid=n;
+                    }
+                    
+                };
+                
+                $scope.getTaxiInfo=function(){
+
+                    $.each($scope.DATA.TAXIS,function(k,v){
+                        var markerTaxi = new google.maps.Marker({
+                            position: new google.maps.LatLng(v.lat,
+                                                           v.long),
+                            map: map,
+                            icon: taxi,
+                            title:v.UUID,
+                            zIndex: 1
+                        });
+                    });
+                    
+                    if(($scope.from.title != '')&&($scope.to.title != '')){
+                        var request = {
+                              origin:$scope.from.pos,
+                              destination:$scope.to.pos,
+                              travelMode: google.maps.TravelMode.DRIVING
+                          };
+                          directionsService.route(request, function(response, status) {
+                            if (status == google.maps.DirectionsStatus.OK) {
+                              directionsDisplay.setDirections(response);
+                            }
+                        });
+                        google.maps.event.addListener(directionsDisplay, 'directions_changed', function() {
+                            var result= directionsDisplay.getDirections();
+                            var total = {m:0,km:0,sec:0,min:0};
+                            var myroute = result.routes[0];
+                            for (var i = 0; i < myroute.legs.length; i++) {
+                                total.m += myroute.legs[i].distance.value;
+                                total.sec += myroute.legs[i].duration.value;
+                            }
+                            total.km = parseFloat(total.m / 1000.0).toFixed(1);
+                            total.min = parseFloat(total.sec / 60).toFixed(0);
+                            
+                            setDirectionBack(total,myroute);
+                        });
+                        
+                        
+                        
+                    }
+
+                    map.setCenter($scope.pos);
+                    
+                }
+                
+
+                
+                $scope.refreshMap=function(){
+                    map = new google.maps.Map(document.getElementById('map-canvas'),mapOptions);
+                    directionsDisplay.setMap(map);                    
+                    var markerYou = new google.maps.Marker({
+                        position: $scope.pos,
+                        map: map,
+                        icon: you,
+                        zIndex: 1
+                    });
+
+                    $.each($scope.DATA.TAXIS,function(k,v){
+                        var markerTaxi = new google.maps.Marker({
+                            position: new google.maps.LatLng(v.lat,
+                                                           v.long),
+                            map: map,
+                            icon: taxi,
+                            title:v.UUID,
+                            zIndex: 1
+                        });
+                    });
+                    
+                    if(($scope.from.title != '')&&($scope.to.title != '')){
+                        var request = {
+                              origin:$scope.from.pos,
+                              destination:$scope.to.pos,
+                              travelMode: google.maps.TravelMode.DRIVING
+                          };
+                          directionsService.route(request, function(response, status) {
+                            if (status == google.maps.DirectionsStatus.OK) {
+                              directionsDisplay.setDirections(response);
+                            }
+                        });
+                        
+                        
+                    }
+
+                    map.setCenter($scope.pos);
+                    
+                }
+                
+                
+
+                
+                $scope.setkm=function(km){
+                    $scope.total=km;
+                }
+                $scope.getkm=function(){
+                    return $scope.total;
+                }
+                
+                $scope.confirmFrom=function(){
+                    $scope.gotoPage('page1');
+                    geocoder.geocode( { 'address': $scope.from.title}, function(results, status) {
+                        if (status == google.maps.GeocoderStatus.OK) {
+                            $scope.from.lat=results[0].geometry.location.lat();
+                            $scope.from.long=results[0].geometry.location.lng();
+                            $scope.from.pos=results[0].geometry.location;
+                            $scope.getTaxiInfo();
+                        } else {
+                        }
+                    });
+                }
+                $scope.confirmTo=function(){
+                    $scope.gotoPage('page1');
+                    geocoder.geocode( { 'address': $scope.to.title}, function(results, status) {
+                        if (status == google.maps.GeocoderStatus.OK) {
+                            $scope.to.lat=results[0].geometry.location.lat();
+                            $scope.to.long=results[0].geometry.location.lng();
+                            $scope.to.pos=results[0].geometry.location;
+                            $scope.getTaxiInfo();
+                        } else {
+                        }
+                    });
+                }
+                
+                
+                $scope.callTaxi=function(taxi){
+                    taxi.status="calling...";
+                    console.log(taxi);
+                    var req={
+                        DATA:{
+                            jobid:$scope.jobid,
+                            passenger : $scope.DATA.passenger,
+                            tel : $scope.DATA.tel,
+                            from : $scope.from,
+                            to : $scope.to,
+                            UUID:UUID,
+                            TAXI_UUID:taxi.UUID,
+                            when:"NOW",
+                            tip:"0",
+                            promo:"",
+                            status:"waiting"
+                        },
+                        UUID:UUID,
+                        TAXI_UUID:taxi.UUID
+                    };
+                    $http.post(prefixURL+"pub/call_taxi",req).success(function (data){
+                        if(data.STATUS=='OK'){
+                            taxi.status="called";
+                            $scope.countdown=$interval(function(){
+                                if(!$scope.jobconfirmed){
+                                    $scope.checkTaxi(taxi);
+                                }
+                            },3000,20);
+                        }
+                    });
+                    
+                }
+
+                $scope.register=function(){
+                    var req={
+                        DATA:{
+                            UUID:UUID,
+                            passenger : $scope.DATA.passenger,
+                            tel : $scope.DATA.tel
+                        },
+                        mode:"Passenger",
+                        UUID:UUID
+                    };
+                    $http.post(prefixURL+"pub/register",req).success(function (data){
+                        if(data.STATUS=='OK'){
+                            $scope.gotoPage("page1");
+                        }
+                    });
+                    
+                }
+                
+                $scope.confirmTaxi=function(taxi){
+                    taxi.status="confirm";
+                    var req={
+                        DATA:{
+                            jobid:$scope.jobid,
+                            TAXI:taxi,
+                            passenger : $scope.DATA.passenger,
+                            tel : $scope.DATA.tel,
+                            from : $scope.from,
+                            to : $scope.to,
+                            UUID:UUID,
+                            TAXI_UUID:taxi.UUID,
+                            when:"NOW",
+                            tip:"0",
+                            promo:"",
+                            status:"passenger_confirmed"
+                        },
+                        UUID:UUID,
+                        TAXI_UUID:taxi.UUID
+                    };
+                    $http.post(prefixURL+"pub/confirm_taxi",req).success(function (data){
+                        if(data.STATUS=='OK'){
+                            taxi.status="confirmed";
+                            $scope.JOB=req.DATA;
+                            $scope.gotoPage("pageTrack");
+                            $interval(function(){
+                                $scope.initTrack();
+                            },500,1);
+                            
+                        }
+                    });
+                    
+                }
+                
+                
+                $scope.checkTaxi=function(taxi){
+                    taxi.status="checking...";
+                    var req={
+                        UUID:UUID,
+                        TAXI_UUID:taxi.UUID,
+                        jobid:$scope.jobid
+                    };
+                    $http.post(prefixURL+"pub/check_taxi",req).success(function (data){
+                        if(data.STATUS=='OK'){
+                            console.log("update status");
+                            console.log(data);
+                            taxi.status=data.DATA.status;
+                            if(data.DATA.status =="called"){
+                            }else if(data.DATA.status =="taxi_accept"){
+                                if (angular.isDefined($scope.countdown)) {
+                                    $interval.cancel($scope.countdown);
+                                    $scope.countdown = undefined;
+                                }
+                                // force update other taxi
+                                if(!$scope.jobconfirmed){
+                                    $scope.jobconfirmed=true;
+                                    $scope.confirmTaxi(taxi);
+                                }
+                                
+                                
+                                
+                            }else if(data.DATA.status =="taxi_reject"){
+                                if (angular.isDefined($scope.countdown)) {
+                                    $interval.cancel($scope.countdown);
+                                    $scope.countdown = undefined;
+                                }
+                            }
+                        }
+                    });
+                    
+                }
+                
+                $scope.refreshTrack=function(){
+                    $scope.track.mapT.setCenter($scope.pos);
+                }
+                
+                $scope.initTrack=function(){
+                    $scope.track={};
+                    $scope.track.directionsDisplayT = new google.maps.DirectionsRenderer({draggable:true});
+                    $scope.track.directionsServiceT = new google.maps.DirectionsService();
+                    $scope.track.geocoderT = new google.maps.Geocoder();
+
+                    var request = {
+                          origin:new google.maps.LatLng(
+                            $scope.JOB.from.lat,
+                            $scope.JOB.from.long
+                        ),
+                          destination: new google.maps.LatLng(
+                            $scope.JOB.to.lat,
+                            $scope.JOB.to.long
+                        ),
+                          travelMode: google.maps.TravelMode.DRIVING
+                      };
+                    $scope.track.directionsServiceT.route(request, function(response, status) {
+                        if (status == google.maps.DirectionsStatus.OK) {
+                          $scope.track.directionsDisplayT.setDirections(response);
+                        }
+                    });                        
+                    
+                    
+                    $scope.track.mapT = new google.maps.Map(document.getElementById('map-canvas-track'),mapOptions);
+                    $scope.track.directionsDisplayT.setMap($scope.track.mapT);   
+                    markerYou = new google.maps.Marker({
+                        position: new google.maps.LatLng($scope.JOB.TAXI.lat,
+                                       $scope.JOB.TAXI.long),
+                        map: $scope.track.mapT,
+                        icon: taxi,
+                        zIndex: 1
+                    });
+                    
+                    $scope.track.mapT.setCenter($scope.pos);
+                    // Update Taxi Position
+                    
+                }
+                
+                $scope.findNewTaxi=function(taxi){
+                    taxi.status="rejected";
+                }
+                
+                
+                $scope.calcPrice=function(){
+                    $scope.price=35;
+                    if($scope.total.km > 1){
+                        $scope.price+=(($scope.total.km-1)*5);
+                    }
+                    if($scope.total.km > 12){
+                        $scope.price+=(($scope.total.km-12)*0.5);
+                    }
+                    if($scope.total.km > 20){
+                        $scope.price+=(($scope.total.km-20)*0.5);
+                    }
+                    if($scope.total.km > 40){
+                        $scope.price+=(($scope.total.km-40)*0.5);
+                    }
+                    if($scope.total.km > 60){
+                        $scope.price+=(($scope.total.km-60)*1);
+                    }
+                    if($scope.total.km > 80){
+                        $scope.price+=(($scope.total.km-80)*1);
+                    }
+                    $scope.price=parseFloat($scope.price).toFixed(2);
+                    return $scope.price;
+                }
+                
+                $scope.debuginfo="";
+                $scope.showUUID=function(){
+                    $scope.debuginfo=device.uuid;
+                    UUID=device.uuid
+                }
+                $scope.getUUID=function(){
+                    $scope.debuginfo=UUID;
+                }
+                
+                $scope.total=0;
+                $scope.lat=0;
+                $scope.long=0;
+                $scope.DATA={};
+                $scope.setLocation=function(lat,long){
+                        $scope.lat=lat;
+                        $scope.long=long;
+                };
+                
+            }]);
+
+        })();
+    </script>
+
+   
+    <script>
+        var map;
+        var directionsDisplay = new google.maps.DirectionsRenderer({draggable:true});
+        var directionsService = new google.maps.DirectionsService();
+        var geocoder = new google.maps.Geocoder();
+        var you = {
+            url: 'images/you64.png',
+            // This marker is 20 pixels wide by 32 pixels tall.
+            size: new google.maps.Size(64, 64),
+            // The origin for this image is 0,0.
+            origin: new google.maps.Point(0,0),
+            // The anchor for this image is the base of the flagpole at 0,32.
+            anchor: new google.maps.Point(32, 32)
+        };
+        var taxi = {
+            url: 'images/taxi32.png',
+            // This marker is 20 pixels wide by 32 pixels tall.
+            size: new google.maps.Size(32, 32),
+            // The origin for this image is 0,0.
+            origin: new google.maps.Point(0,0),
+            // The anchor for this image is the base of the flagpole at 0,32.
+            anchor: new google.maps.Point(16, 16)
+        };
+        var mapOptions = {
+            disableDefaultUI: true,
+    /*
+            styles:[
+                        {
+                          "featureType": "poi",
+                          "elementType": "labels",
+                          "stylers": [
+                            { "visibility": "off" }
+                          ]
+                        }
+                      ],
+    */                  
+            zoom: 18
+        };
+        var markerYou;
+        var markerTaxi;
+        
+function initialize() {
+    
+    map = new google.maps.Map(document.getElementById('map-canvas'),mapOptions);
+    directionsDisplay.setMap(map);                    
+
+    
+  // Try HTML5 geolocation
+  if(navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(function(position) {
+        
+        
+        
+        
+      var pos = new google.maps.LatLng(position.coords.latitude,
+                                       position.coords.longitude);
+/*
+      var infowindow = new google.maps.InfoWindow({
+        map: map,
+        position: pos,
+        content: 'Location found using HTML5.'
+      });
+*/
+
+    markerYou = new google.maps.Marker({
+        position: pos,
+        map: map,
+        icon: you,
+        zIndex: 1
+    });
+        
+        
+
+    map.setCenter(pos);
+        
+    var scope = angular.element(
+    document.
+    getElementById("MainWrap")).
+    scope();
+    scope.$apply(function () {
+        scope.setLocation(position.coords.latitude,position.coords.longitude);
+        scope.pos=pos;
+    });
+    
+    // Update back to "passenger" service
+        $.ajax({
+        url: prefixURL+"pub/passenger",
+        type: "post",
+        dataType :"json",
+        data: {
+            DATA:{
+                UUID:UUID,
+                lat:position.coords.latitude,
+                long:position.coords.longitude
+            }
+        },
+        success: function(data){
+            console.log(data);
+            scope.$apply(function () {
+                scope.DATA=data.DATA;
+                scope.getTaxiInfo();
+            });
+            
+        },
+        error:function(errMsg ){
+            console.log(errMsg);
+        }
+    });
+        
+    }, function() {
+      handleNoGeolocation(true);
+    });
+  } else {
+    // Browser doesn't support Geolocation
+    handleNoGeolocation(false);
+  }
+}
+
+function handleNoGeolocation(errorFlag) {
+  if (errorFlag) {
+    var content = 'Error: The Geolocation service failed.';
+  } else {
+    var content = 'Error: Your browser doesn\'t support geolocation.';
+  }
+
+  var options = {
+    map: map,
+    position: new google.maps.LatLng(60, 105),
+    content: content,
+    disableDefaultUI: true
+  };
+
+  var infowindow = new google.maps.InfoWindow(options);
+  map.setCenter(options.position);
+}
+
+        
+    // Wait for device API libraries to load
+    //
+    document.addEventListener("deviceready", onDeviceReady, false);
+        
+google.maps.event.addDomListener(window, 'load', initialize);
+function setDirectionBack(total,myroute){
+    var scope = angular.element(
+    document.
+    getElementById("MainWrap")).
+    scope();
+    scope.$apply(function () {
+
+        scope.from.lat=myroute.legs[0].start_location.lat();
+        scope.from.long=myroute.legs[0].start_location.lng();
+        scope.from.pos=myroute.legs[0].start_location;
+        scope.from.addr=myroute.legs[0].start_address;
+
+        scope.to.lat=myroute.legs[(myroute.legs.length-1)].end_location.lat();
+        scope.to.long=myroute.legs[(myroute.legs.length-1)].end_location.lng();
+        scope.to.pos=myroute.legs[(myroute.legs.length-1)].end_location;
+        scope.to.addr=myroute.legs[(myroute.legs.length-1)].end_address ;
+
+        scope.refreshMap();
+                            
+        scope.total=total;
+    });
+}
+        
+    </script>
+    <style>
+      html, body, #map-canvas {
+        height: 250px;
+        margin: 0px;
+        padding: 0px;
+        padding-top: 30px;
+      }
+        #map-canvas-track {
+        height: 250px;
+        margin: 0px;
+        padding: 0px;
+        padding-top: 30px;
+      }
+        <!-- For Disabled Text Selection  -->
+        html { 
+            -webkit-user-select: none;
+        }
+        
+        <!-- For Disabled G Logo  -->
+        
+        a[href^="http://maps.google.com/maps"]{display:none !important}
+        a[href^="https://maps.google.com/maps"]{display:none !important}
+        a[title="Click to see this area on Google Maps"]{display:none !important}
+        a[target="_blank"]{display:none !important}
+        .gmnoprint a, .gmnoprint span {
+            display:none;
+        }
+        .gmnoprint div {
+            background:none !important;
+        }        
+        #current-taxi{
+            padding-left : 15px;
+            padding-top : 5px;
+            padding-bottom : 5px;
+            padding-right : 15px;
+            background-color: black;
+            color:white;
+        }
+    </style>    
+</head>
+<body id="MainWrap" oncontextmenu="return false" ondragstart="return false" 
+onselectstart="return false" ng-controller="mapControl as m">
+
+<nav class="navbar navbar-inverse  navbar-fixed-top" role="navigation" style="padding-top:10px">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="taxi.html" >
+        <img alt="Brand" src="images/taxi24.png">
+      </a>
+    
+        <p class="navbar-text"><b>Taxi</b>Express
+            <a ng-click="gotoPage('pageRegister')" > 2014</a>
+
+        </p>
+            
+      </div>
+  </div>
+</nav>
+    
+
+    <div id="page1" ng-show="pages['page1']">
+<div id="map-canvas"></div>   
+
+        
+<div id="current-taxi"> {{DATA.TAXIS.length}} Taxi </div>   
+
+<div class="container" style="padding-top:15px;" role="main">        
+<div class="list-group">
+  <a href="#" class="list-group-item" ng-click="gotoPage('pageFrom')">
+    <p class="list-group-item-text" style="font-size:10px;">From</p>
+    <h4 class="list-group-item-heading">{{from.title}}</h4>
+    <p class="list-group-item-text" style="font-size:7px;">{{from.addr}}</p>
+  </a>
+  <a href="#" class="list-group-item" ng-click="gotoPage('pageTo');">
+      <span class="badge">{{total.km}} Km / {{total.min}} Min / {{calcPrice()}} B.</span>
+    <p class="list-group-item-text" style="font-size:10px;">To</p>
+    <h4 class="list-group-item-heading">{{to.title}}</h4>
+    <p class="list-group-item-text" style="font-size:7px;">{{to.addr}}</p>
+      
+  </a>
+    
+</div>
+<button type="button" class="btn btn-warning  btn-lg btn-block" ng-click="gotoPage('pageCallTaxi')" ng-show="((to.title.length > 0)&&(from.title.length > 0))">
+    <span class="glyphicon glyphicon-flag" aria-hidden="true" ></span>
+    Get Taxi</button>    
+
+    
+    
+    </div>    
+
+</div>    
+    
+    
+    <div id="pageFrom" ng-show="pages['pageFrom']">
+<div class="container" style="padding-top:15px;" role="main">        
+<form role="form">
+  <div class="form-group">
+    <label for="frompoi">From</label>
+    <input type="text" class="form-control" id="frompoi" placeholder="From location" ng-model="from.title">
+  </div>
+        
+    <button type="button" class="btn btn-warning  btn-lg btn-block"  ng-click="confirmFrom()">
+        <span class="glyphicon glyphicon-flag" aria-hidden="true"></span>
+        OK
+    </button>    
+</form>
+</div>
+    </div>
+    
+    <div id="pageTo" ng-show="pages['pageTo']">
+<div class="container" style="padding-top:15px;" role="main">        
+<form role="form">
+  <div class="form-group">
+    <label for="topoi">To</label>
+    <input type="text" class="form-control" id="topoi" placeholder="To location" ng-model="to.title">
+  </div>
+        
+    <button type="button" class="btn btn-warning  btn-lg btn-block"  ng-click="confirmTo();">
+        <span class="glyphicon glyphicon-flag" aria-hidden="true"></span>
+        OK
+    </button>    
+</form>
+</div>
+    </div>
+
+    
+    
+    
+    
+    
+    <div id="pageCallTaxi" ng-show="pages['pageCallTaxi']">
+        <div class="container" style="padding-top:15px;" role="main">  
+            <div class="list-group">
+              <a href="#" class="list-group-item" ng-repeat="car in DATA.TAXIS" ng-click="callTaxi(car)">
+                  <span class="badge">{{car.status}}</span>
+                <h4 class="list-group-item-heading">{{car.license}}</h4>
+              </a>
+
+            </div>
+        </div>
+    </div>
+    
+    
+    <div id="pageFinish" ng-show="pages['pageFinish']">
+        <div class="container" style="padding-top:15px;" role="main">  
+            <div class="alert alert-warning" role="alert">ขอบคุณที่ใช้บริการ</div>
+        </div>
+    </div>
+    
+    <div id="pageRegister" ng-show="pages['pageRegister']">
+        <div class="container" style="padding-top:15px;" role="main">  
+            <form role="form">
+              <div class="form-group">
+                <input type="text" class="form-control" id="PassengerName" placeholder="Passenger name" ng-model="DATA.passenger">
+                <input type="text" class="form-control" id="Tel" placeholder="Tel" ng-model="DATA.tel">
+                <input type="text" class="form-control" id="Tel" placeholder="Tel" ng-model="debuginfo">
+              </div>
+            <div class="row">
+                <div class="col-xs-6">
+                <button type="button" class="btn btn-default  btn-lg btn-block"  ng-click="register();">
+                    Update
+                </button>    
+                </div>
+
+                <div class="col-xs-6">
+                <button type="button" class="btn btn-default  btn-lg btn-block"  ng-click="gotoPage('page1');">
+                    Back
+                </button>    
+                </div>
+
+            </div>
+            <div class="row">
+                <div class="col-xs-6">
+                <button type="button" class="btn btn-default  btn-lg btn-block"  ng-click="getUUID()">
+                    UDDI
+                </button>    
+                </div>
+
+                <div class="col-xs-6">
+                <button type="button" class="btn btn-default  btn-lg btn-block"  ng-click="showUUID()">
+                    dev.UUID
+                </button>    
+                </div>
+
+            </div>
+            </form>
+        </div>
+    </div>
+    
+    
+    
+    
+    
+
+    <div id="pageTrack" ng-show="pages['pageTrack']">
+        <div id="map-canvas-track"></div>   
+
+        
+<div id="current-taxi">{{JOB.TAXI.license}} - {{JOB.TAXI.driver}} </div>   
+
+<div class="container" style="padding-top:15px;" role="main">        
+<div class="list-group">
+  <a href="#" class="list-group-item" >
+    <p class="list-group-item-text" style="font-size:10px;">From</p>
+    <h4 class="list-group-item-heading">{{from.title}}</h4>
+    <p class="list-group-item-text" style="font-size:7px;">{{from.addr}}</p>
+  </a>
+  <a href="#" class="list-group-item" >
+      <span class="badge">{{total.km}} Km / {{total.min}} Min / {{calcPrice()}} B.</span>
+    <p class="list-group-item-text" style="font-size:10px;">To</p>
+    <h4 class="list-group-item-heading">{{to.title}}</h4>
+    <p class="list-group-item-text" style="font-size:7px;">{{to.addr}}</p>
+  </a>
+    
+</div>
+            <div class="row">
+                <div class="col-xs-6">
+                    <button type="button" class="btn btn-warning btn-block" >โทรหา {{JOB.TAXI.tel}}</button>
+                </div>
+                <div class="col-xs-6">
+                    <button type="button" class="btn btn-primary btn-block" ng-click="gotoPage('pageFinish')">สิ้นสุดการเดินทาง</button>
+                </div>
+            </div>
+    </div>    
+</div>    
+    
+    
+    
+    
+    
+</body>
+</html>

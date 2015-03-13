@@ -1,0 +1,91 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!--
+ Licensed to the Apache Software Foundation (ASF) under one
+ or more contributor license agreements.  See the NOTICE file
+ distributed with this work for additional information
+ regarding copyright ownership.  The ASF licenses this file
+ to you under the Apache License, Version 2.0 (the
+ "License"); you may not use this file except in compliance
+ with the License.  You may obtain a copy of the License at
+
+ http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing,
+ software distributed under the License is distributed on an
+ "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ KIND, either express or implied.  See the License for the
+ specific language governing permissions and limitations
+ under the License.
+-->
+<widget xmlns='http://www.w3.org/ns/widgets' 
+        id='th.co.netbay.taxiexpress' 
+        xmlns:gap="http://phonegap.com/ns/1.0" 
+        version='2.0.0'
+        >
+    <name>
+        Taxi Express
+    </name>
+    <description>
+         Taxi service in Thailand
+        event. 
+    </description>
+    <author href='http://www.netbay.co.th' email='redkoma@netbay.co.th'>
+         Netbay
+    </author>
+
+
+    <!-- iOS will attempt to validate the API key you provide to GMSServices by pinging google servers.
+    http://stackoverflow.com/questions/18245146/using-google-maps-on-ios/18349893#18349893 -->
+
+    <gap:config-file platform="ios" parent="GMSServices" overwrite="true">
+    <array>
+        <dict>
+            <key>provideAPIKey</key>
+            <string>AIzaSyBumy_VLcMmT0LPzbCp-fpcSu_J4NBpZ0Y</string>
+        </dict>
+    </array>
+    </gap:config-file>
+    
+    
+    <access origin='*'/>
+    <!-- <content src="http://mysite.com/myapp.html" /> for external pages -->
+    <content src='index.html'/>
+    
+    
+    <gap:plugin name="org.apache.cordova.core.device" version="0.2.12" />
+    <gap:plugin name="org.apache.cordova.network-information" version="0.2.12" />
+    
+    <gap:plugin name="org.apache.cordova.geolocation" />
+    <gap:config-file platform="ios" parent="NSLocationAlwaysUsageDescription" overwrite="false"> 
+    <array> 
+    <string>Allow GPS</string> 
+    </array> 
+    </gap:config-file>
+    
+    <gap:plugin name="com.phonegap.plugin.statusbar" version="1.1.0" />
+    <preference name="StatusBarOverlaysWebView" value="true" />
+    
+
+    
+    <!-- Preferences for iOS -->    
+    <preference name="orientation" value="portrait" />    
+    <preference name="target-device" value="universal" />
+    
+    <preference name='AllowInlineMediaPlayback' value='false'/>
+    <preference name='BackupWebStorage' value='cloud'/>
+    
+    <!-- กันดึงหน้าจอ -->
+    <preference name='DisallowOverscroll' value='true'/>
+    
+    <preference name='EnableViewportScale' value='false'/>
+    <preference name='KeyboardDisplayRequiresUserAction' value='true'/>
+    <preference name='MediaPlaybackRequiresUserAction' value='false'/>
+    <preference name='SuppressesIncrementalRendering' value='false'/>
+    <preference name='TopActivityIndicator' value='gray'/>
+    <preference name='GapBetweenPages' value='0'/>
+    <preference name='PageLength' value='0'/>
+    <preference name='PaginationBreakingMode' value='page'/>
+    <!-- page, column -->
+    <preference name='PaginationMode' value='unpaginated'/>
+    <!-- unpaginated, leftToRight, topToBottom, bottomToTop, rightToLeft -->
+</widget>

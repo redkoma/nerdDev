@@ -1,0 +1,301 @@
+<!doctype html>
+<html ng-app="base">
+<head>
+    <meta charset="UTF-8">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="viewport" content="width=device-width">
+    <link rel="stylesheet" href="css/bootstrap.min.css" type="text/css">
+    <link rel="stylesheet" href="css/animate.css" type="text/css">
+
+    <script type="text/javascript" charset="utf-8" src="cordova.js"></script>
+    <script type="text/javascript" charset="utf-8">
+        var UUID="TEST";
+//        var prefixURL="http://192.168.100.154:8554/";
+        var prefixURL="http://192.168.100.249:8554/";
+
+
+    // device APIs are available
+    //
+    function onDeviceReady() {
+        UUID=device.uuid;
+        
+    }
+
+    </script>    
+    
+    <script type="text/javascript"  src="js/angular.min.js"></script>
+    <script type="text/javascript"  src="js/jquery.js"></script>
+    <script type="text/javascript"  src="js/angular-animate.min.js"></script>
+    
+    <script>
+
+        (function(){
+            var app = angular.module('base',[]);
+            app.controller('appControl',['$http','$scope','$interval',function($http,$scope,$interval){
+                $scope.pages=
+                    {
+                        "pageLogin" : true,
+                        "pageLoginFail" : false,
+                        "pageProfile" : false,
+                        "pageMission" : false,
+                        "pageNewsFeed" : false,
+                        "pageActivity" : false
+                    };
+                $scope.gotoPage=function(page){
+                    $.each($scope.pages,function(k,v){
+                        if(k==page){
+                            $scope.pages[k]=true;
+                        }else{
+                            $scope.pages[k]=false;
+                        }
+                    });
+                };
+                
+                $scope.getUserInfo=function(){
+                    var uid=localStorage.getItem('lastuid');
+                    var ucode=localStorage.getItem('lastucode');
+                    $http.post(prefixURL+'lazydev/nerdprofile/'+uid,
+                    {
+                        UCODE:ucode
+                    }
+                    ).success(function(data){
+                        console.log(data);
+                        if(data.STATUS =="OK"){
+                            $scope.DATA.profile=data.DATA.profile;
+                            $scope.app.title=$scope.DATA.profile.profileName;
+                            $scope.gotoPage('pageProfile');
+                            $scope.changeIcon("images/av001_64.png");
+                        }else{
+                            $scope.gotoPage('pageLoginFail');
+                        
+                        }
+                    });
+                }
+                $scope.changeIcon = function(img){
+                    $scope.app.icon=img;
+                    $scope.app.ani_icon="animated bounceIn";
+                    $interval(function(){
+                        $scope.app.ani_icon="";
+                    },1000,1);
+                }
+                $scope.login = function(){
+                    $http.post(prefixURL+'auth/login',
+                    {
+                        USERNAME:$scope.app.username,
+                        PASSWORD:$scope.app.password
+
+                    }).success(function (data){
+                        if(data.STATUS=='OK'){
+                            localStorage.setItem('lastuid',data.DATA.UID);
+                            localStorage.setItem('lastucode',data.DATA.UCODE);
+                            $scope.getUserInfo();
+                        }else{
+                            $scope.app.title="Failed";
+                            $scope.gotoPage('pageLoginFail');
+                        }
+                    });
+                };
+                $scope.selectedSkill=function(){
+                    if($scope.DATA.selectedSkillId != undefined){
+                        return true;
+                    }else{
+                        return false;
+                    }
+                }
+                $scope.showSkill=function(idx){
+                    $scope.DATA.selectedSkillId=idx;
+                }
+                $scope.DATA={
+                    profile:{
+                        stat:[]
+                    }
+                };
+                $scope.app={
+                    username:"user",
+                    password:"password",
+                    ani_icon:"",
+                    icon:"images/logo64.png"
+                };
+                
+            }]);
+
+            
+            
+            
+        })();
+
+        
+        
+    // Wait for device API libraries to load
+    //
+    document.addEventListener("deviceready", onDeviceReady, false);
+        
+        
+</script>
+    <style>
+      html, body {
+        height: 250px;
+        margin: 0px;
+        padding: 0px;
+        padding-top: 30px;
+      }
+        .Developer{
+            background-color: #6666DD !important;
+            color: #FFFFFF !important;
+        }
+        .txtScore{
+            padding:3px;
+            font-size: 16px;
+            width: 100%;
+        }
+        .boxshadow{
+            -webkit-box-shadow: 3px 3px 5px 0px rgba(0,0,0,0.5);
+            -moz-box-shadow: 3px 3px 5px 0px rgba(0,0,0,0.5);
+            box-shadow: 3px 3px 5px 0px rgba(0,0,0,0.5);
+        }
+        .titlebar{
+            background-color: #EAEAEA;
+        }
+        .padding15{
+            padding:15px;
+        }
+        <!-- For Disabled Text Selection  -->
+        html { 
+            -webkit-user-select: none;
+        }
+    </style>    
+</head>
+<!--body id="MainWrap" oncontextmenu="return false" ondragstart="return false" 
+onselectstart="return false" ng-controller="appControl as m"-->
+<body id="MainWrap"  ng-controller="appControl as m">
+
+<nav class="navbar navbar-fixed-top titlebar" role="navigation" ng-class="DATA.profile.jobclass">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="taxi.html" >
+        <img alt="Brand" ng-class="app.ani_icon" ng-src="{{app.icon}}">
+      </a>
+    
+        <p class="navbar-text" ng-show="pages.pageLogin">
+            <b>NET</b><font color='red'>Bay</font> Nerd Development
+        </p>
+        <p class="navbar-text" ng-show="pages.pageLogin==false">
+            {{app.title}}
+        </p>
+            
+      </div>
+  </div>
+</nav>
+<div class="container" ng-show="(!pages['pageLogin'])&&(!pages['pageLoginFail'])" >
+     <div class="row">
+        <div class="col-xs-3">
+        </div>
+        <div class="col-xs-9 " >
+            <div class="btn-group btn-group-xs" role="group" aria-label="">
+              <button type="button" class="btn btn-default" ng-click="gotoPage('pageProfile')">Profile</button>
+              <button type="button" class="btn btn-default" ng-click="gotoPage('pageMission')">Mission</button>
+              <button type="button" class="btn btn-default" ng-click="gotoPage('pageNewsFeed')">News Feed</button>
+            </div>
+
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-xs-3">
+        </div>
+        <div class="col-xs-9 " >
+            <div class="txtScore" >
+                {{DATA.profile.jobclass}} Lv. {{DATA.profile.joblevel}} Exp. {{DATA.profile.score}}
+            </div>
+        </div>
+    </div>
+</div>
+    <div id="pageLogin" ng-show="pages['pageLogin']">
+        <div class="container" style="padding-top:15px;" role="main">        
+            <form role="form">
+              <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" class="form-control" id="username" placeholder="Username" ng-model="app.username">
+                <label for="password">Password</label>
+                <input type="password" class="form-control" id="password" placeholder="Password" ng-model="app.password">
+              </div>
+
+                <button type="button" class="btn btn-warning  btn-lg btn-block"  ng-click="login()">
+                    <span class="glyphicon glyphicon-flag" aria-hidden="true"></span>
+                    Login
+                </button>
+            </form>
+        </div>    
+    </div>    
+    
+    
+    <div id="pageLoginFail" ng-show="pages['pageLoginFail']">
+        <div class="container" style="padding-top:15px;" role="main">        
+                <button type="button" class="btn btn-warning  btn-lg btn-block"  ng-click="gotoPage('pageLogin');changeIcon('images/logo64.png');">
+                    <span class="glyphicon glyphicon-flag" aria-hidden="true"></span>
+                    Back
+                </button>
+        </div>
+    </div>
+    
+    
+    
+    <div id="pageProfile" ng-show="pages['pageProfile']">
+        <div class="container"  role="main">       
+            <div class="container boxshadow padding15" style="background-color:#EAEAEA;">       
+                <div class="row">
+                    <div class="col-xs-12">
+                        <h3>Skills</h3>
+                    </div>
+                    <div class="col-xs-12" ng-show="selectedSkill();" >
+<ul class="list-group">
+  <li class="list-group-item" ng-repeat="pi in DATA.profile.stat[DATA.selectedSkillId].PI">
+    <span class="badge">{{pi.piVal}}</span>
+       {{pi.piName}}
+  </li>
+</ul>                        
+                        
+                        <div >{{pi}}</div>
+                    </div>
+                    <div class="col-xs-6"  ng-repeat="status in DATA.profile.stat" >
+                        <button class="btn btn-primary btn-block btn-sm" type="button" ng-click="showSkill($index);">
+                          {{status.skill}} <span class="badge">{{status.score}}</span>
+                        </button>
+                    </div>
+                </div>
+            
+            
+            
+            </div>
+            <br>
+                <button type="button" class="btn btn-warning  btn-lg btn-block"  ng-click="gotoPage('pageLogin');changeIcon('images/logo64.png');">
+                    <span class="glyphicon glyphicon-flag" aria-hidden="true"></span>
+                    Back
+                </button>
+        </div>
+    </div>
+
+    
+    <div id="pageMission" ng-show="pages['pageMission']">
+        <div class="container" style="padding-top:15px;" role="main">        
+        </div>
+    </div>
+    <div id="pageNewsFeed" ng-show="pages['pageNewsFeed']">
+        <div class="container" style="padding-top:15px;" role="main">        
+            <br>
+            {{DATA.profile}}
+        </div>
+    </div>
+    
+    
+    
+    <div id="pageActivity" ng-show="pages['pageActivity']">
+        <div class="container" style="padding-top:15px;" role="main">        
+        </div>
+    </div>
+
+    
+    
+    
+    
+</body>
+</html>
