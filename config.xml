@@ -18,19 +18,18 @@
  under the License.
 -->
 <widget xmlns='http://www.w3.org/ns/widgets' 
-        id='th.co.netbay.taxiexpress' 
+        id='th.co.netbay.nerdDev' 
         xmlns:gap="http://phonegap.com/ns/1.0" 
         version='2.0.0'
         >
     <name>
-        Taxi Express
+        Nerd Profile
     </name>
     <description>
-         Taxi service in Thailand
-        event. 
+        Profile status and voucher for play in your office. 
     </description>
     <author href='http://www.netbay.co.th' email='redkoma@netbay.co.th'>
-         Netbay
+         RedKOMA
     </author>
 
 
