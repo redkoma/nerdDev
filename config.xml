@@ -18,7 +18,7 @@
  under the License.
 -->
 <widget xmlns='http://www.w3.org/ns/widgets' 
-        id='th.co.netbay.nerdDev' 
+        id='th.co.netbay.nerd'
         xmlns:gap="http://phonegap.com/ns/1.0" 
         version='2.0.0'
         >
@@ -26,12 +26,14 @@
         Nerd Profile
     </name>
     <description>
-        Profile status and voucher for play in your office. 
+        Personal improvement game for team communication. Application for present your status in style of RPG game which your team can define item for buy and sell in game with your reward point from your boss. Item can be funny thing or status to upgrade your stat. You can set up job title and level by define status criteria.
     </description>
     <author href='http://www.netbay.co.th' email='redkoma@netbay.co.th'>
-         RedKOMA
+        RedKOMA Group
     </author>
 
+    <icon src="icon.png" />
+    <gap:splash src="splash.png" />
 
     <!-- iOS will attempt to validate the API key you provide to GMSServices by pinging google servers.
     http://stackoverflow.com/questions/18245146/using-google-maps-on-ios/18349893#18349893 -->
